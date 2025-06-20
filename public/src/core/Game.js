@@ -66,13 +66,30 @@ export class Game {
   }
 
   handleResize() {
-    const container = this.canvas.parentElement;
-    const scaleX = container.clientWidth / this.canvas.width;
-    const scaleY = container.clientHeight / this.canvas.height;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    const borderWidth = window.innerWidth <= 768 ? 2 : 4;
+    const availableWidth = viewportWidth - borderWidth;
+    const availableHeight = viewportHeight - borderWidth;
+    
+    const scaleX = availableWidth / this.canvas.width;
+    const scaleY = availableHeight / this.canvas.height;
     const scale = Math.min(scaleX, scaleY);
     
-    this.canvas.style.transform = `scale(${scale})`;
+    this.canvas.style.transform = `translate(-50%, -50%) scale(${scale})`;
     this.canvas.style.transformOrigin = 'center';
+    this.canvas.style.position = 'absolute';
+    this.canvas.style.top = '50%';
+    this.canvas.style.left = '50%';
+    
+    if (this.inputManager) {
+      this.inputManager.updateCanvasScale(scale);
+      this.inputManager.updateCanvasPosition(
+        viewportWidth / 2 - (this.canvas.width * scale) / 2,
+        viewportHeight / 2 - (this.canvas.height * scale) / 2
+      );
+    }
   }
 
   async loadSystems() {

@@ -5,10 +5,22 @@ export class InputManager {
     this.mouse = { x: 0, y: 0, pressed: false };
     this.touch = { x: 0, y: 0, active: false, identifier: null };
     this.gamepad = null;
+    this.canvasScale = 1;
+    this.canvasOffsetX = 0;
+    this.canvasOffsetY = 0;
     
     this.preventedKeys = new Set(['F1', 'F5', 'F11', 'F12']);
     
     this.bindEvents();
+  }
+
+  updateCanvasScale(scale) {
+    this.canvasScale = scale;
+  }
+
+  updateCanvasPosition(offsetX, offsetY) {
+    this.canvasOffsetX = offsetX;
+    this.canvasOffsetY = offsetY;
   }
 
   bindEvents() {
@@ -43,9 +55,20 @@ export class InputManager {
   }
 
   handleMouseMove(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    this.mouse.x = e.clientX - rect.left;
-    this.mouse.y = e.clientY - rect.top;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    const canvasRealWidth = this.canvas.width * this.canvasScale;
+    const canvasRealHeight = this.canvas.height * this.canvasScale;
+    
+    const canvasX = (viewportWidth - canvasRealWidth) / 2;
+    const canvasY = (viewportHeight - canvasRealHeight) / 2;
+    
+    const rawX = e.clientX - canvasX;
+    const rawY = e.clientY - canvasY;
+    
+    this.mouse.x = rawX / this.canvasScale;
+    this.mouse.y = rawY / this.canvasScale;
   }
 
   handleMouseDown(e) {
@@ -65,9 +88,20 @@ export class InputManager {
     e.preventDefault();
     if (e.touches.length > 0) {
       const touch = e.touches[0];
-      const rect = this.canvas.getBoundingClientRect();
-      this.touch.x = touch.clientX - rect.left;
-      this.touch.y = touch.clientY - rect.top;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      const canvasRealWidth = this.canvas.width * this.canvasScale;
+      const canvasRealHeight = this.canvas.height * this.canvasScale;
+      
+      const canvasX = (viewportWidth - canvasRealWidth) / 2;
+      const canvasY = (viewportHeight - canvasRealHeight) / 2;
+      
+      const rawX = touch.clientX - canvasX;
+      const rawY = touch.clientY - canvasY;
+      
+      this.touch.x = rawX / this.canvasScale;
+      this.touch.y = rawY / this.canvasScale;
       this.touch.active = true;
       this.touch.identifier = touch.identifier;
       
@@ -82,9 +116,20 @@ export class InputManager {
     for (let i = 0; i < e.touches.length; i++) {
       const touch = e.touches[i];
       if (touch.identifier === this.touch.identifier) {
-        const rect = this.canvas.getBoundingClientRect();
-        this.touch.x = touch.clientX - rect.left;
-        this.touch.y = touch.clientY - rect.top;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        const canvasRealWidth = this.canvas.width * this.canvasScale;
+        const canvasRealHeight = this.canvas.height * this.canvasScale;
+        
+        const canvasX = (viewportWidth - canvasRealWidth) / 2;
+        const canvasY = (viewportHeight - canvasRealHeight) / 2;
+        
+        const rawX = touch.clientX - canvasX;
+        const rawY = touch.clientY - canvasY;
+        
+        this.touch.x = rawX / this.canvasScale;
+        this.touch.y = rawY / this.canvasScale;
         
         this.mouse.x = this.touch.x;
         this.mouse.y = this.touch.y;
