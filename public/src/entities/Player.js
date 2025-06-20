@@ -22,6 +22,16 @@ export class Player extends Entity {
     this.speedMultiplier = 1;
     this.fireRateMultiplier = 1;
     
+    // 永続アップグレード効果
+    this.baseDamage = 1;
+    this.damageMultiplier = 1;
+    this.baseSpeed = 200;
+    this.baseFireRate = 8;
+    this.multiShotCount = 1;
+    this.hasPiercing = false;
+    this.hasExplosive = false;
+    this.hasLifesteal = false;
+    
     this.assetLoader = AssetLoader.getInstance();
   }
 
@@ -72,7 +82,7 @@ export class Player extends Entity {
   async shoot(direction) {
     const { Game } = await import('../core/Game.js');
     const game = Game.getInstance();
-    const bullets = game.weaponSystem.fire(this.x, this.y, direction);
+    const bullets = game.weaponSystem.fire(this.x, this.y, direction, game.permanentUpgrades);
     
     bullets.forEach(bullet => {
       game.addEntity(bullet);
@@ -156,5 +166,35 @@ export class Player extends Entity {
     }
     
     ctx.restore();
+  }
+
+  applyPermanentUpgrades(upgradeSystem) {
+    const stats = upgradeSystem.getPlayerStats({
+      damage: this.baseDamage,
+      fireRate: this.baseFireRate,
+      speed: this.baseSpeed,
+      maxHealth: this.maxHealth
+    });
+
+    // ステータス更新
+    this.damageMultiplier = stats.damage / this.baseDamage;
+    this.fireRate = stats.fireRate;
+    this.speed = stats.speed;
+    
+    // 最大HP増加時に現在HPも回復
+    const healthIncrease = stats.maxHealth - this.maxHealth;
+    if (healthIncrease > 0) {
+      this.maxHealth = stats.maxHealth;
+      this.heal(healthIncrease);
+    }
+    
+    this.multiShotCount = stats.multiShot;
+    this.hasPiercing = stats.piercing;
+    this.hasExplosive = stats.explosive;
+    this.hasLifesteal = stats.lifesteal;
+  }
+
+  getCurrentDamage() {
+    return this.baseDamage * this.damageMultiplier;
   }
 }
