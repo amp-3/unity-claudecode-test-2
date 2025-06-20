@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omni Shooter - Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        
+        #game-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        canvas {
+            border: 2px solid #555;
+            background: #111;
+        }
+        
+        .controls {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .controls h3 {
+            color: #0ff;
+        }
+        
+        .button-group {
+            margin: 10px 0;
+        }
+        
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        
+        button:hover {
+            background: #444;
+        }
+        
+        .info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #333;
+            border-radius: 5px;
+            text-align: left;
+        }
+        
+        .status {
+            color: #0f0;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #f00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Omni Shooter - Game Test</h1>
+    
+    <div class="controls">
+        <h3>Game Controls</h3>
+        <div class="button-group">
+            <button onclick="startGame()">Start New Game</button>
+            <button onclick="pauseGame()">Pause</button>
+            <button onclick="resumeGame()">Resume</button>
+            <button onclick="resetGame()">Reset to Menu</button>
+        </div>
+        
+        <h3>Test Features</h3>
+        <div class="button-group">
+            <button onclick="testWeapons()">Test All Weapons</button>
+            <button onclick="spawnEnemies()">Spawn Test Enemies</button>
+            <button onclick="spawnPowerUps()">Spawn Power-ups</button>
+            <button onclick="testParticles()">Test Particle Effects</button>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="addScore()">Add 1000 Score</button>
+            <button onclick="healPlayer()">Heal Player</button>
+            <button onclick="damagePlayer()">Damage Player</button>
+            <button onclick="toggleDebug()">Toggle Debug Info</button>
+        </div>
+    </div>
+    
+    <div id="game-container">
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+    </div>
+    
+    <div class="info">
+        <h3>Game Status</h3>
+        <div id="status" class="status">Initializing...</div>
+        
+        <h3>Controls</h3>
+        <ul>
+            <li><strong>WASD or Arrow Keys:</strong> Move player</li>
+            <li><strong>Mouse Click:</strong> Shoot (aim with mouse)</li>
+            <li><strong>Enter:</strong> Start game from menu</li>
+            <li><strong>Escape:</strong> Pause/Unpause</li>
+            <li><strong>Touch:</strong> Move and shoot (mobile)</li>
+        </ul>
+        
+        <h3>Game Features</h3>
+        <ul>
+            <li>✅ Player movement and shooting</li>
+            <li>✅ Multiple weapon types (Normal, Spread, Power, Rapid, Laser)</li>
+            <li>✅ Enemy AI systems (Chase, Orbit, Sniper, Wander)</li>
+            <li>✅ Power-up system</li>
+            <li>✅ Particle effects</li>
+            <li>✅ Audio system with synthesized sounds</li>
+            <li>✅ Save/load system</li>
+            <li>✅ Wave-based enemy spawning</li>
+            <li>🚀 Rocket sprite for player character</li>
+            <li>📱 Responsive UI layout</li>
+        </ul>
+        
+        <h3>Recent Updates</h3>
+        <ul>
+            <li>🎯 Fixed bullet shooting direction</li>
+            <li>💥 Fixed bullet-enemy collision detection</li>
+            <li>🚀 Added rocket sprite for player</li>
+            <li>📐 Fixed UI text positioning</li>
+        </ul>
+    </div>
+    
+    <script type="module">
+        import { Game } from './src/core/Game.js';
+        
+        let game;
+        
+        window.addEventListener('DOMContentLoaded', async () => {
+            const canvas = document.getElementById('game-canvas');
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                statusDiv.textContent = 'Initializing game...';
+                game = Game.getInstance();
+                
+                const initialized = await game.init(canvas);
+                
+                if (initialized) {
+                    statusDiv.textContent = '✅ Game initialized successfully! Click "Start New Game" to play.';
+                    statusDiv.className = 'status';
+                    game.start();
+                } else {
+                    statusDiv.textContent = '❌ Failed to initialize game';
+                    statusDiv.className = 'error';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ Error: ' + error.message;
+                statusDiv.className = 'error';
+                console.error('Game initialization error:', error);
+            }
+        });
+        
+        // Expose test functions to global scope
+        window.startGame = () => {
+            if (game) game.setState('PLAYING');
+        };
+        
+        window.pauseGame = () => {
+            if (game) game.setState('PAUSED');
+        };
+        
+        window.resumeGame = () => {
+            if (game) game.unpause();
+        };
+        
+        window.resetGame = () => {
+            if (game) game.setState('MENU');
+        };
+        
+        window.testWeapons = async () => {
+            if (!game || !game.weaponSystem) return;
+            
+            const weapons = ['spread', 'power', 'rapid', 'laser'];
+            let i = 0;
+            
+            const cycleWeapon = () => {
+                if (i < weapons.length) {
+                    game.weaponSystem.switchWeapon(weapons[i], 5);
+                    console.log(`Switched to ${weapons[i]} weapon`);
+                    i++;
+                    setTimeout(cycleWeapon, 5000);
+                } else {
+                    game.weaponSystem.switchWeapon('normal');
+                    console.log('Returned to normal weapon');
+                }
+            };
+            
+            cycleWeapon();
+        };
+        
+        window.spawnEnemies = async () => {
+            if (!game || !game.spawnSystem) return;
+            
+            try {
+                const { FastEnemy, TankEnemy, SniperEnemy, OrbitEnemy } = await import('./src/entities/Enemy.js');
+                const center = { x: game.gameArea.x, y: game.gameArea.y };
+                
+                // Spawn different enemy types in a circle around the player
+                const enemies = [
+                    new FastEnemy(center.x + 200, center.y),
+                    new TankEnemy(center.x - 200, center.y),
+                    new SniperEnemy(center.x, center.y + 200),
+                    new OrbitEnemy(center.x, center.y - 200)
+                ];
+                
+                enemies.forEach(enemy => game.addEntity(enemy));
+                console.log('Spawned test enemies');
+            } catch (error) {
+                console.error('Error spawning enemies:', error);
+            }
+        };
+        
+        window.spawnPowerUps = async () => {
+            if (!game) return;
+            
+            try {
+                const { PowerUp } = await import('./src/entities/PowerUp.js');
+                const center = { x: game.gameArea.x, y: game.gameArea.y };
+                
+                const powerUps = [
+                    new PowerUp(center.x + 100, center.y, 'health'),
+                    new PowerUp(center.x - 100, center.y, 'speed'),
+                    new PowerUp(center.x, center.y + 100, 'fireRate'),
+                    new PowerUp(center.x, center.y - 100, 'spread')
+                ];
+                
+                powerUps.forEach(powerUp => game.addEntity(powerUp));
+                console.log('Spawned power-ups');
+            } catch (error) {
+                console.error('Error spawning power-ups:', error);
+            }
+        };
+        
+        window.testParticles = () => {
+            if (!game || !game.particleSystem) return;
+            
+            const center = { x: game.gameArea.x, y: game.gameArea.y };
+            
+            // Create different particle effects
+            game.particleSystem.createExplosion(center.x, center.y);
+            setTimeout(() => game.particleSystem.createExplosion(center.x + 100, center.y), 500);
+            setTimeout(() => game.particleSystem.createExplosion(center.x - 100, center.y), 1000);
+            setTimeout(() => game.particleSystem.createExplosion(center.x, center.y + 100), 1500);
+            
+            console.log('Created particle effects');
+        };
+        
+        window.addScore = () => {
+            if (game) {
+                game.addScore(1000);
+                console.log('Added 1000 points');
+            }
+        };
+        
+        window.healPlayer = () => {
+            if (game && game.player) {
+                game.player.heal(1);
+                console.log('Player healed');
+            }
+        };
+        
+        window.damagePlayer = () => {
+            if (game && game.player) {
+                game.player.takeDamage(1);
+                console.log('Player damaged');
+            }
+        };
+        
+        window.toggleDebug = () => {
+            console.log('Debug toggle - feature to be implemented');
+        };
+    </script>
+</body>
+</html>

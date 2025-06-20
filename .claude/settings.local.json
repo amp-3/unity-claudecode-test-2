@@ -4,7 +4,8 @@
       "Bash(mkdir:*)",
       "Bash(touch:*)",
       "Bash(tree:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }
