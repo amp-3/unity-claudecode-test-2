@@ -76,7 +76,16 @@ export class Player extends Entity {
   }
 
   getShootDirection(input) {
-    return Math.atan2(input.mouse.y - this.y, input.mouse.x - this.x);
+    // より安全な角度計算
+    const deltaX = input.mouse.x - this.x;
+    const deltaY = input.mouse.y - this.y;
+    
+    // ゼロ除算を防ぐ
+    if (Math.abs(deltaX) < 0.001 && Math.abs(deltaY) < 0.001) {
+      return 0; // デフォルトは右向き
+    }
+    
+    return Math.atan2(deltaY, deltaX);
   }
 
   async shoot(direction) {
@@ -135,15 +144,15 @@ export class Player extends Entity {
       ctx.globalAlpha = 0.5;
     }
     
-    const rocketSprite = this.assetLoader.getImage('rocket');
+    const playerSprite = this.assetLoader.getImage('player');
     
-    if (rocketSprite && this.assetLoader.isLoaded('rocket')) {
+    if (playerSprite && this.assetLoader.isLoaded('player')) {
       ctx.rotate(this.rotation + Math.PI / 2);
       const spriteWidth = this.width;
       const spriteHeight = this.height;
       
       ctx.drawImage(
-        rocketSprite,
+        playerSprite,
         -spriteWidth / 2,
         -spriteHeight / 2,
         spriteWidth,

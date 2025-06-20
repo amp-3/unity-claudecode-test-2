@@ -15,10 +15,14 @@ export class InputManager {
   }
 
   updateCanvasScale(scale) {
+    // getBoundingClientRect()を使用しているため、このメソッドは不要になったが
+    // 互換性のために残しておく
     this.canvasScale = scale;
   }
 
   updateCanvasPosition(offsetX, offsetY) {
+    // getBoundingClientRect()を使用しているため、このメソッドは不要になったが
+    // 互換性のために残しておく
     this.canvasOffsetX = offsetX;
     this.canvasOffsetY = offsetY;
   }
@@ -55,20 +59,16 @@ export class InputManager {
   }
 
   handleMouseMove(e) {
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    // キャンバスの境界ボックスを取得して正確な座標変換を行う
+    const rect = this.canvas.getBoundingClientRect();
     
-    const canvasRealWidth = this.canvas.width * this.canvasScale;
-    const canvasRealHeight = this.canvas.height * this.canvasScale;
+    // キャンバス内の相対座標を計算
+    const relativeX = e.clientX - rect.left;
+    const relativeY = e.clientY - rect.top;
     
-    const canvasX = (viewportWidth - canvasRealWidth) / 2;
-    const canvasY = (viewportHeight - canvasRealHeight) / 2;
-    
-    const rawX = e.clientX - canvasX;
-    const rawY = e.clientY - canvasY;
-    
-    this.mouse.x = rawX / this.canvasScale;
-    this.mouse.y = rawY / this.canvasScale;
+    // キャンバス座標系に変換
+    this.mouse.x = (relativeX / rect.width) * this.canvas.width;
+    this.mouse.y = (relativeY / rect.height) * this.canvas.height;
   }
 
   handleMouseDown(e) {
@@ -89,20 +89,13 @@ export class InputManager {
     e.preventDefault();
     if (e.touches.length > 0) {
       const touch = e.touches[0];
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
+      const rect = this.canvas.getBoundingClientRect();
       
-      const canvasRealWidth = this.canvas.width * this.canvasScale;
-      const canvasRealHeight = this.canvas.height * this.canvasScale;
+      const relativeX = touch.clientX - rect.left;
+      const relativeY = touch.clientY - rect.top;
       
-      const canvasX = (viewportWidth - canvasRealWidth) / 2;
-      const canvasY = (viewportHeight - canvasRealHeight) / 2;
-      
-      const rawX = touch.clientX - canvasX;
-      const rawY = touch.clientY - canvasY;
-      
-      this.touch.x = rawX / this.canvasScale;
-      this.touch.y = rawY / this.canvasScale;
+      this.touch.x = (relativeX / rect.width) * this.canvas.width;
+      this.touch.y = (relativeY / rect.height) * this.canvas.height;
       this.touch.active = true;
       this.touch.identifier = touch.identifier;
       
@@ -118,20 +111,13 @@ export class InputManager {
     for (let i = 0; i < e.touches.length; i++) {
       const touch = e.touches[i];
       if (touch.identifier === this.touch.identifier) {
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+        const rect = this.canvas.getBoundingClientRect();
         
-        const canvasRealWidth = this.canvas.width * this.canvasScale;
-        const canvasRealHeight = this.canvas.height * this.canvasScale;
+        const relativeX = touch.clientX - rect.left;
+        const relativeY = touch.clientY - rect.top;
         
-        const canvasX = (viewportWidth - canvasRealWidth) / 2;
-        const canvasY = (viewportHeight - canvasRealHeight) / 2;
-        
-        const rawX = touch.clientX - canvasX;
-        const rawY = touch.clientY - canvasY;
-        
-        this.touch.x = rawX / this.canvasScale;
-        this.touch.y = rawY / this.canvasScale;
+        this.touch.x = (relativeX / rect.width) * this.canvas.width;
+        this.touch.y = (relativeY / rect.height) * this.canvas.height;
         
         this.mouse.x = this.touch.x;
         this.mouse.y = this.touch.y;
