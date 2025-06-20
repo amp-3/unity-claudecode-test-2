@@ -20,6 +20,10 @@ export class UIManager {
         this.renderHUD(game);
         this.renderPauseMenu(game);
         break;
+      case 'LEVEL_UP':
+        this.renderHUD(game);
+        this.renderLevelUpMenu(game);
+        break;
       case 'GAME_OVER':
         this.renderGameOver(game);
         break;
@@ -116,6 +120,12 @@ export class UIManager {
     // Health
     this.renderHealthBar(20, 110, player.health, player.maxHealth);
     
+    // Experience Bar and Level
+    if (game.levelingSystem) {
+      this.renderExperienceBar(game);
+      this.renderLevel(game);
+    }
+    
     // Weapon info - 左側、適切な幅で
     const weapon = game.weaponSystem.getCurrentWeapon();
     ctx.font = '16px Arial';
@@ -196,6 +206,53 @@ export class UIManager {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(`${health}/${maxHealth}`, x + barWidth / 2, y + barHeight / 2);
+  }
+
+  renderExperienceBar(game) {
+    const ctx = this.ctx;
+    const progress = game.levelingSystem.getCurrentLevelProgress();
+    
+    // 経験値バーを画面上部中央に配置
+    const barWidth = 300;
+    const barHeight = 12;
+    const x = (this.canvas.width - barWidth) / 2;
+    const y = 10;
+    
+    // Background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(x, y, barWidth, barHeight);
+    
+    // Experience fill
+    ctx.fillStyle = '#00aaff';
+    ctx.fillRect(x, y, barWidth * progress.percentage, barHeight);
+    
+    // Border
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, barWidth, barHeight);
+    
+    // Text
+    ctx.font = '11px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${progress.current}/${progress.total} EXP`, x + barWidth / 2, y + barHeight / 2);
+  }
+
+  renderLevel(game) {
+    const ctx = this.ctx;
+    const level = game.levelingSystem.getLevel();
+    
+    // レベル表示を経験値バーの左側に配置
+    const barWidth = 300;
+    const x = (this.canvas.width - barWidth) / 2 - 60;
+    const y = 16;
+    
+    ctx.font = 'bold 16px Arial';
+    ctx.fillStyle = '#ffff00';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`LV ${level}`, x, y);
   }
 
   renderPauseMenu(game) {
@@ -314,5 +371,99 @@ export class UIManager {
         this.notifications.splice(i, 1);
       }
     }
+  }
+
+  renderLevelUpMenu(game) {
+    const ctx = this.ctx;
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height / 2;
+    
+    // 半透明の背景
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    ctx.save();
+    
+    // レベルアップテキスト
+    ctx.font = 'bold 42px Arial';
+    ctx.fillStyle = '#ffff00';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#ffff00';
+    ctx.fillText('LEVEL UP!', centerX, centerY - 120);
+    
+    // アップグレード選択肢
+    const upgrades = game.levelingSystem.getAvailableUpgrades();
+    const cardWidth = 180;
+    const cardHeight = 140;
+    const cardSpacing = 20;
+    const totalWidth = (cardWidth * 3) + (cardSpacing * 2);
+    const startX = centerX - totalWidth / 2;
+    
+    for (let i = 0; i < upgrades.length; i++) {
+      const upgrade = upgrades[i];
+      const cardX = startX + (cardWidth + cardSpacing) * i;
+      const cardY = centerY - 40;
+      
+      // カード背景
+      ctx.fillStyle = 'rgba(50, 50, 50, 0.9)';
+      ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+      
+      // カード枠
+      ctx.strokeStyle = '#00aaff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cardX, cardY, cardWidth, cardHeight);
+      
+      // アイコン
+      ctx.font = '36px Arial';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.shadowBlur = 0;
+      ctx.fillText(upgrade.icon, cardX + cardWidth / 2, cardY + 40);
+      
+      // 名前
+      ctx.font = 'bold 16px Arial';
+      ctx.fillStyle = '#ffff00';
+      ctx.fillText(upgrade.name, cardX + cardWidth / 2, cardY + 70);
+      
+      // 説明
+      ctx.font = '12px Arial';
+      ctx.fillStyle = '#cccccc';
+      const description = upgrade.description;
+      const maxWidth = cardWidth - 10;
+      
+      // 長い説明文を複数行に分割
+      const words = description.split(' ');
+      let line = '';
+      let y = cardY + 90;
+      
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+        
+        if (testWidth > maxWidth && n > 0) {
+          ctx.fillText(line, cardX + cardWidth / 2, y);
+          line = words[n] + ' ';
+          y += 14;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, cardX + cardWidth / 2, y);
+      
+      // キー番号
+      ctx.font = 'bold 14px Arial';
+      ctx.fillStyle = '#00ff00';
+      ctx.fillText(`[${i + 1}]`, cardX + cardWidth / 2, cardY + cardHeight - 10);
+    }
+    
+    // 指示テキスト
+    ctx.font = '18px Arial';
+    ctx.fillStyle = '#aaaaaa';
+    ctx.fillText('数字キー(1-3)または該当のカードをクリックして選択', centerX, centerY + 140);
+    
+    ctx.restore();
   }
 }

@@ -254,4 +254,31 @@ export class InputManager {
     this.mouse.pressed = false;
     this.touch.active = false;
   }
+
+  checkLevelUpCardClick(game) {
+    if (!this.mouse.pressed || !game.levelingSystem) return -1;
+    
+    const upgrades = game.levelingSystem.getAvailableUpgrades();
+    if (upgrades.length === 0) return -1;
+    
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height / 2;
+    const cardWidth = 180;
+    const cardHeight = 140;
+    const cardSpacing = 20;
+    const totalWidth = (cardWidth * 3) + (cardSpacing * 2);
+    const startX = centerX - totalWidth / 2;
+    const cardY = centerY - 40;
+    
+    for (let i = 0; i < upgrades.length; i++) {
+      const cardX = startX + (cardWidth + cardSpacing) * i;
+      
+      if (this.mouse.x >= cardX && this.mouse.x <= cardX + cardWidth &&
+          this.mouse.y >= cardY && this.mouse.y <= cardY + cardHeight) {
+        return i;
+      }
+    }
+    
+    return -1;
+  }
 }
