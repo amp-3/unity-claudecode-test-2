@@ -6,6 +6,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Omni Shooterは、HTML5 CanvasとJavaScriptで構築されたブラウザ向け全方位シューティングゲームです。ES6モジュール、Viteビルドシステム、モジュラー設計を採用しています。
 
+## プロジェクト構造
+
+```
+├── public/          # 公開用ビルド（サイト配布版）
+│   ├── index.html   # メインゲームページ（フルスクリーン対応）
+│   ├── test.html    # テスト・デバッグページ
+│   ├── src/         # ゲームソースコード
+│   └── assets/      # ゲームアセット（スプライト）
+├── src/             # 開発用ソースコード
+├── test-game.html   # 開発用デバッグページ
+└── package.json     # Viteビルド設定
+```
+
 ## 開発コマンド
 
 ### 基本的な開発作業
@@ -33,8 +46,9 @@ npm run lint:fix
 ```
 
 ### デバッグとテスト
-- `test-game.html` - 全機能をテストできる専用デバッグページ
-- ブラウザの開発者ツールでコンソールログを確認
+- `test-game.html` - 開発用デバッグページ（全機能テスト可能）
+- `public/test.html` - 公開版テストページ（レスポンシブ対応）
+- `public/index.html` - 公開版メインゲーム（完全フルスクリーン）
 - `npm run dev`でlocalhost:3000でアクセス可能
 
 ## アーキテクチャとコード構造
