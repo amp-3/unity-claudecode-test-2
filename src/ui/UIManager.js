@@ -1,0 +1,290 @@
+export class UIManager {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.fadeAlpha = 0;
+    this.fadeDirection = 0;
+    this.notifications = [];
+    this.notificationDuration = 3;
+  }
+
+  render(game) {
+    switch (game.gameState) {
+      case 'MENU':
+        this.renderMenu(game);
+        break;
+      case 'PLAYING':
+        this.renderHUD(game);
+        break;
+      case 'PAUSED':
+        this.renderHUD(game);
+        this.renderPauseMenu(game);
+        break;
+      case 'GAME_OVER':
+        this.renderGameOver(game);
+        break;
+    }
+    
+    this.renderNotifications();
+  }
+
+  renderMenu(game) {
+    const ctx = this.ctx;
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height / 2;
+    
+    // Title
+    ctx.save();
+    ctx.font = 'bold 48px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#00ff00';
+    ctx.fillText('SPACE SURVIVOR', centerX, centerY - 100);
+    
+    // Subtitle
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#aaaaaa';
+    ctx.shadowBlur = 5;
+    ctx.fillText('A Unity-Inspired Game', centerX, centerY - 50);
+    
+    // Play button
+    const buttonWidth = 200;
+    const buttonHeight = 50;
+    const buttonX = centerX - buttonWidth / 2;
+    const buttonY = centerY;
+    
+    ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+    ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+    
+    ctx.strokeStyle = '#00ff00';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+    
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('PLAY', centerX, buttonY + buttonHeight / 2);
+    
+    // Instructions
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#888888';
+    ctx.fillText('Use WASD to move, Mouse to aim and shoot', centerX, centerY + 100);
+    ctx.fillText('Press ESC to pause', centerX, centerY + 130);
+    
+    // High score
+    if (game.highScore > 0) {
+      ctx.font = '20px Arial';
+      ctx.fillStyle = '#ffff00';
+      ctx.fillText(`High Score: ${game.highScore}`, centerX, centerY + 180);
+    }
+    
+    ctx.restore();
+  }
+
+  renderHUD(game) {
+    const ctx = this.ctx;
+    const player = game.player;
+    
+    if (!player) return;
+    
+    ctx.save();
+    
+    // Score
+    ctx.font = 'bold 24px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`Score: ${game.score}`, 20, 20);
+    
+    // Wave info
+    ctx.font = '18px Arial';
+    ctx.fillText(`Wave: ${game.spawnSystem.getCurrentWave()}`, 20, 50);
+    
+    if (game.spawnSystem.isInBetweenWaves()) {
+      ctx.fillStyle = '#ffff00';
+      ctx.fillText('Wave Complete!', 20, 75);
+    } else {
+      ctx.fillText(`Enemies: ${game.spawnSystem.getEnemiesRemaining()}`, 20, 75);
+    }
+    
+    // Health
+    this.renderHealthBar(20, 110, player.health, player.maxHealth);
+    
+    // Weapon info
+    const weapon = game.weaponSystem.getCurrentWeapon();
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`Weapon: ${weapon.name}`, 20, 150);
+    
+    const weaponTimer = game.weaponSystem.getWeaponTimeRemaining();
+    if (weaponTimer > 0) {
+      ctx.fillStyle = '#00ffff';
+      ctx.fillText(`Time: ${weaponTimer.toFixed(1)}s`, 20, 170);
+    }
+    
+    // Game time
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffffff';
+    const minutes = Math.floor(game.gameTime / 60);
+    const seconds = Math.floor(game.gameTime % 60);
+    ctx.fillText(`Time: ${minutes}:${seconds.toString().padStart(2, '0')}`, this.canvas.width - 20, 20);
+    
+    // FPS (optional)
+    if (game.deltaTime > 0) {
+      const fps = Math.round(1 / game.deltaTime);
+      ctx.font = '14px Arial';
+      ctx.fillStyle = '#888888';
+      ctx.fillText(`FPS: ${fps}`, this.canvas.width - 20, 45);
+    }
+    
+    ctx.restore();
+  }
+
+  renderHealthBar(x, y, health, maxHealth) {
+    const ctx = this.ctx;
+    const barWidth = 150;
+    const barHeight = 20;
+    const healthPercentage = health / maxHealth;
+    
+    // Background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fillRect(x, y, barWidth, barHeight);
+    
+    // Health fill
+    const healthColor = healthPercentage > 0.5 ? '#00ff00' :
+                       healthPercentage > 0.25 ? '#ffff00' : '#ff0000';
+    ctx.fillStyle = healthColor;
+    ctx.fillRect(x, y, barWidth * healthPercentage, barHeight);
+    
+    // Border
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, barWidth, barHeight);
+    
+    // Text
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${health}/${maxHealth}`, x + barWidth / 2, y + barHeight / 2);
+  }
+
+  renderPauseMenu(game) {
+    const ctx = this.ctx;
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height / 2;
+    
+    // Darken background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Pause text
+    ctx.save();
+    ctx.font = 'bold 48px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ffffff';
+    ctx.fillText('PAUSED', centerX, centerY - 50);
+    
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#aaaaaa';
+    ctx.shadowBlur = 0;
+    ctx.fillText('Press ESC to resume', centerX, centerY + 20);
+    ctx.fillText('Press R to restart', centerX, centerY + 50);
+    
+    ctx.restore();
+  }
+
+  renderGameOver(game) {
+    const ctx = this.ctx;
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height / 2;
+    
+    // Background fade
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    ctx.save();
+    
+    // Game Over text
+    ctx.font = 'bold 56px Arial';
+    ctx.fillStyle = '#ff0000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = '#ff0000';
+    ctx.fillText('GAME OVER', centerX, centerY - 100);
+    
+    // Score
+    ctx.font = '32px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ffffff';
+    ctx.fillText(`Final Score: ${game.score}`, centerX, centerY - 30);
+    
+    // High score
+    if (game.score >= game.highScore) {
+      ctx.font = '28px Arial';
+      ctx.fillStyle = '#ffff00';
+      ctx.shadowColor = '#ffff00';
+      ctx.fillText('NEW HIGH SCORE!', centerX, centerY + 20);
+    }
+    
+    // Stats
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#aaaaaa';
+    ctx.shadowBlur = 0;
+    const minutes = Math.floor(game.gameTime / 60);
+    const seconds = Math.floor(game.gameTime % 60);
+    ctx.fillText(`Time Survived: ${minutes}:${seconds.toString().padStart(2, '0')}`, centerX, centerY + 70);
+    ctx.fillText(`Waves Completed: ${game.spawnSystem.getCurrentWave() - 1}`, centerX, centerY + 100);
+    
+    // Restart prompt
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#00ff00';
+    ctx.fillText('Press ENTER to return to menu', centerX, centerY + 150);
+    
+    ctx.restore();
+  }
+
+  addNotification(text, duration = 3) {
+    this.notifications.push({
+      text,
+      duration,
+      timeRemaining: duration,
+      alpha: 1
+    });
+  }
+
+  renderNotifications() {
+    const ctx = this.ctx;
+    const centerX = this.canvas.width / 2;
+    let y = 200;
+    
+    for (let i = this.notifications.length - 1; i >= 0; i--) {
+      const notification = this.notifications[i];
+      
+      ctx.save();
+      ctx.font = '20px Arial';
+      ctx.fillStyle = `rgba(255, 255, 0, ${notification.alpha})`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = `rgba(255, 255, 0, ${notification.alpha})`;
+      ctx.fillText(notification.text, centerX, y);
+      ctx.restore();
+      
+      y += 30;
+      
+      notification.timeRemaining -= 1/60; // Assuming 60 FPS
+      notification.alpha = Math.min(1, notification.timeRemaining);
+      
+      if (notification.timeRemaining <= 0) {
+        this.notifications.splice(i, 1);
+      }
+    }
+  }
+}

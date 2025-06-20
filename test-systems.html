@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Systems Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #fff;
+        }
+        
+        canvas {
+            border: 1px solid #333;
+            background: #000;
+            display: block;
+            margin: 20px auto;
+        }
+        
+        .info {
+            text-align: center;
+            margin: 20px;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 10px;
+        }
+        
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            background: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Game Systems Test</h1>
+    <div class="info">
+        <p>Test all the game systems working together</p>
+        <p>Use WASD to move, mouse to aim and shoot</p>
+    </div>
+    
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    
+    <div class="controls">
+        <button onclick="testWeapons()">Test Weapons</button>
+        <button onclick="testEnemies()">Spawn Enemies</button>
+        <button onclick="testPowerUps()">Spawn PowerUps</button>
+        <button onclick="testParticles()">Test Particles</button>
+        <button onclick="testAudio()">Test Audio</button>
+        <button onclick="clearSave()">Clear Save</button>
+    </div>
+    
+    <div id="stats" class="info"></div>
+
+    <script type="module">
+        import { Game } from './src/core/Game.js';
+        
+        let game;
+        
+        async function initGame() {
+            const canvas = document.getElementById('gameCanvas');
+            game = Game.getInstance();
+            
+            try {
+                await game.init(canvas);
+                game.start();
+                console.log('Game initialized successfully');
+                
+                // Show some initial stats
+                updateStats();
+                setInterval(updateStats, 1000);
+            } catch (error) {
+                console.error('Failed to initialize game:', error);
+                document.getElementById('stats').innerHTML = 'Error: ' + error.message;
+            }
+        }
+        
+        function updateStats() {
+            if (!game) return;
+            
+            const stats = document.getElementById('stats');
+            const entities = Array.from(game.entities.values());
+            const enemyCount = entities.filter(e => e.type === 'enemy').length;
+            const bulletCount = entities.filter(e => e.type === 'bullet').length;
+            const powerUpCount = entities.filter(e => e.type === 'powerup').length;
+            const particleCount = game.particleSystem ? game.particleSystem.getParticleCount() : 0;
+            
+            stats.innerHTML = `
+                <strong>Game Stats:</strong><br>
+                State: ${game.gameState} | Score: ${game.score} | Wave: ${game.spawnSystem?.getCurrentWave() || 0}<br>
+                Entities: ${game.entities.size} | Enemies: ${enemyCount} | Bullets: ${bulletCount} | PowerUps: ${powerUpCount} | Particles: ${particleCount}
+            `;
+        }
+        
+        // Test functions
+        window.testWeapons = async function() {
+            if (!game || !game.weaponSystem) return;
+            
+            const weapons = ['spread', 'power', 'rapid', 'laser'];
+            const weapon = weapons[Math.floor(Math.random() * weapons.length)];
+            game.weaponSystem.setWeapon(weapon, 5);
+            console.log(`Switched to ${weapon} weapon`);
+        };
+        
+        window.testEnemies = async function() {
+            if (!game || !game.spawnSystem) return;
+            
+            // Force spawn some enemies
+            const { Enemy, FastEnemy, TankEnemy } = await import('./src/entities/Enemy.js');
+            const enemyTypes = [Enemy, FastEnemy, TankEnemy];
+            
+            for (let i = 0; i < 5; i++) {
+                const EnemyClass = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+                const angle = Math.random() * Math.PI * 2;
+                const x = 400 + Math.cos(angle) * 250;
+                const y = 300 + Math.sin(angle) * 250;
+                const enemy = new EnemyClass(x, y);
+                game.addEntity(enemy);
+            }
+            console.log('Spawned test enemies');
+        };
+        
+        window.testPowerUps = async function() {
+            if (!game) return;
+            
+            const { PowerUp } = await import('./src/entities/PowerUp.js');
+            const types = ['health', 'speed', 'fireRate', 'weaponSpread', 'weaponPower'];
+            
+            for (let i = 0; i < 3; i++) {
+                const type = types[Math.floor(Math.random() * types.length)];
+                const angle = Math.random() * Math.PI * 2;
+                const x = 400 + Math.cos(angle) * 150;
+                const y = 300 + Math.sin(angle) * 150;
+                const powerUp = new PowerUp(x, y, type);
+                game.addEntity(powerUp);
+            }
+            console.log('Spawned test power-ups');
+        };
+        
+        window.testParticles = function() {
+            if (!game || !game.particleSystem) return;
+            
+            // Create explosion at center
+            game.particleSystem.createExplosion(400, 300);
+            
+            // Create some sparks
+            for (let i = 0; i < 3; i++) {
+                const x = 350 + Math.random() * 100;
+                const y = 250 + Math.random() * 100;
+                game.particleSystem.createSpark(x, y);
+            }
+            console.log('Created test particles');
+        };
+        
+        window.testAudio = function() {
+            if (!game || !game.audioManager) return;
+            
+            game.audioManager.playSound('shoot');
+            setTimeout(() => game.audioManager.playSound('explosion'), 200);
+            setTimeout(() => game.audioManager.playSound('powerup'), 400);
+            console.log('Played test sounds');
+        };
+        
+        window.clearSave = function() {
+            if (!game || !game.saveSystem) return;
+            
+            game.saveSystem.reset();
+            console.log('Save data cleared');
+        };
+        
+        // Initialize when page loads
+        initGame();
+    </script>
+</body>
+</html>
