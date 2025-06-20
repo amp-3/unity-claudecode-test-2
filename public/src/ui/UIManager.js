@@ -6,6 +6,9 @@ export class UIManager {
     this.fadeDirection = 0;
     this.notifications = [];
     this.notificationDuration = 3;
+    this.petalTimer = 0;
+    this.petalInterval = 0.3; // 花びら生成間隔（秒）
+    this.petals = []; // レベルアップ画面専用の花びら
   }
 
   render(game) {
@@ -175,6 +178,17 @@ export class UIManager {
       ctx.fillStyle = '#888888';
       ctx.fillText(`FPS: ${fps}`, this.canvas.width - rightMargin, 45);
     }
+    
+    // デバッグ用: マウス位置表示（問題が解決したら削除）
+    /*
+    if (game.inputManager) {
+      const mousePos = game.inputManager.getMousePosition();
+      ctx.font = '12px Arial';
+      ctx.fillStyle = '#ff00ff';
+      ctx.fillText(`Mouse: ${Math.round(mousePos.x)}, ${Math.round(mousePos.y)}`, this.canvas.width - rightMargin, 65);
+      ctx.fillText(`Player: ${Math.round(player.x)}, ${Math.round(player.y)}`, this.canvas.width - rightMargin, 80);
+    }
+    */
     
     ctx.restore();
   }
@@ -382,16 +396,47 @@ export class UIManager {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
+    // 花びらパーティクルの生成と管理
+    this.petalTimer += game.deltaTime || 0.016;
+    if (this.petalTimer >= this.petalInterval) {
+      this.createPetals();
+      this.petalTimer = 0;
+    }
+    
+    // 花びらの更新と描画
+    this.updatePetals(game.deltaTime || 0.016);
+    this.renderPetals(ctx);
+    
     ctx.save();
     
-    // レベルアップテキスト
+    // レベルアップテキスト（キラキラ効果付き）
     ctx.font = 'bold 42px Arial';
-    ctx.fillStyle = '#ffff00';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = '#ffff00';
+    
+    // アニメーション効果
+    const time = Date.now() * 0.005;
+    const pulse = 1 + Math.sin(time * 3) * 0.1;
+    const rainbow = Math.sin(time * 2) * 0.5 + 0.5;
+    
+    // レインボー効果
+    const hue = (time * 50) % 360;
+    ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+    ctx.shadowBlur = 20 + Math.sin(time * 4) * 5;
+    ctx.shadowColor = ctx.fillStyle;
+    
+    ctx.save();
+    ctx.scale(pulse, pulse);
+    ctx.fillText('LEVEL UP!', centerX / pulse, (centerY - 120) / pulse);
+    ctx.restore();
+    
+    // 追加の輝きエフェクト
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = '#ffffff';
+    ctx.globalAlpha = 0.3 + Math.sin(time * 6) * 0.2;
     ctx.fillText('LEVEL UP!', centerX, centerY - 120);
+    ctx.globalAlpha = 1;
     
     // アップグレード選択肢
     const upgrades = game.levelingSystem.getAvailableUpgrades();
@@ -465,5 +510,97 @@ export class UIManager {
     ctx.fillText('数字キー(1-3)または該当のカードをクリックして選択', centerX, centerY + 140);
     
     ctx.restore();
+  }
+  
+  createPetals() {
+    const colors = ['#ff69b4', '#ffb6c1', '#ffc0cb', '#ffdbec', '#fff0f5'];
+    const count = 2;
+    
+    for (let i = 0; i < count; i++) {
+      const petal = {
+        x: Math.random() * this.canvas.width,
+        y: -20,
+        vx: (Math.random() - 0.5) * 30,
+        vy: 20 + Math.random() * 30,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        width: 8 + Math.random() * 6,
+        height: 10 + Math.random() * 8,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 5,
+        swayAmplitude: 20 + Math.random() * 30,
+        swayFrequency: 0.5 + Math.random() * 1,
+        initialX: Math.random() * this.canvas.width,
+        timeAlive: 0,
+        alpha: 1
+      };
+      this.petals.push(petal);
+    }
+  }
+  
+  updatePetals(dt) {
+    for (let i = this.petals.length - 1; i >= 0; i--) {
+      const petal = this.petals[i];
+      
+      petal.timeAlive += dt;
+      petal.y += petal.vy * dt;
+      petal.rotation += petal.rotationSpeed * dt;
+      
+      // 横揺れ動作
+      const swayOffset = Math.sin(petal.timeAlive * petal.swayFrequency * Math.PI * 2) * petal.swayAmplitude;
+      petal.x = petal.initialX + swayOffset;
+      
+      // 画面下に到達したら削除
+      if (petal.y > this.canvas.height + 20) {
+        this.petals.splice(i, 1);
+      }
+    }
+  }
+  
+  renderPetals(ctx) {
+    ctx.save();
+    
+    this.petals.forEach(petal => {
+      ctx.save();
+      ctx.globalAlpha = petal.alpha * 0.8;
+      ctx.translate(petal.x, petal.y);
+      ctx.rotate(petal.rotation);
+      ctx.fillStyle = petal.color;
+      ctx.fillRect(-petal.width / 2, -petal.height / 2, petal.width, petal.height);
+      ctx.restore();
+    });
+    
+    ctx.restore();
+  }
+  
+  clearPetals() {
+    this.petals = [];
+  }
+  
+  fadeOutPetals(duration = 0.2) {
+    this.petals.forEach(petal => {
+      if (!petal.fadeStartTime) {
+        petal.fadeStartTime = 0;
+        petal.fadeDuration = duration;
+        petal.originalAlpha = petal.alpha;
+      }
+    });
+    
+    // フェードアウト処理をupdatePetalsに統合
+    const fadeInterval = setInterval(() => {
+      let allFaded = true;
+      this.petals.forEach(petal => {
+        if (petal.fadeStartTime !== undefined) {
+          petal.fadeStartTime += 0.016;
+          const fadeProgress = Math.min(1, petal.fadeStartTime / petal.fadeDuration);
+          petal.alpha = petal.originalAlpha * (1 - fadeProgress);
+          if (fadeProgress < 1) allFaded = false;
+        }
+      });
+      
+      if (allFaded) {
+        clearInterval(fadeInterval);
+        this.clearPetals();
+      }
+    }, 16);
   }
 }

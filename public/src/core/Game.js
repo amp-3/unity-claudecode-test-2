@@ -157,6 +157,10 @@ export class Game {
         if (prevState !== 'PAUSED' && prevState !== 'LEVEL_UP') {
           this.startNewGame();
         }
+        // レベルアップ画面から戻った時は花びらをクリア
+        if (prevState === 'LEVEL_UP' && this.uiManager) {
+          this.uiManager.clearPetals();
+        }
         break;
       case 'PAUSED':
         this.pause();
@@ -216,6 +220,11 @@ export class Game {
     if (this.inputManager) {
       this.inputManager.reset();
     }
+    
+    // レベルアップ時のクラッカー演出
+    if (this.particleSystem) {
+      this.particleSystem.createLevelUpCelebration(this.canvas.width, this.canvas.height);
+    }
   }
 
   selectUpgrade(upgradeIndex) {
@@ -228,6 +237,14 @@ export class Game {
       // プレイヤーのステータスを更新
       if (this.player) {
         this.player.applyPermanentUpgrades(this.permanentUpgrades);
+      }
+      
+      // パーティクルとUIの花びらをフェードアウト
+      if (this.particleSystem) {
+        this.particleSystem.fadeOutAll(0.2);
+      }
+      if (this.uiManager) {
+        this.uiManager.fadeOutPetals(0.2);
       }
       
       this.isPaused = false;
