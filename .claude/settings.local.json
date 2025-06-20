@@ -5,7 +5,9 @@
       "Bash(touch:*)",
       "Bash(tree:*)",
       "Bash(python3:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

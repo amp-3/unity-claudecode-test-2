@@ -285,8 +285,8 @@ export class Game {
       this.updateGameplay(this.deltaTime);
     }
     
-    this.inputManager.update();
     this.handleInput();
+    this.inputManager.update();
     
     this.render();
     

@@ -50,11 +50,6 @@ export class UIManager {
     ctx.shadowColor = '#00ff00';
     ctx.fillText('SPACE SURVIVOR', centerX, centerY - 100);
     
-    // Subtitle
-    ctx.font = '24px Arial';
-    ctx.fillStyle = '#aaaaaa';
-    ctx.shadowBlur = 5;
-    ctx.fillText('A Unity-Inspired Game', centerX, centerY - 50);
     
     // Play button
     const buttonWidth = 200;
@@ -129,10 +124,12 @@ export class UIManager {
       this.renderLevel(game);
     }
     
-    // Weapon info - 左側、適切な幅で
+    // Weapon info - WaveUIと左端を揃える
+    const leftMargin = 20; // Wave情報と同じ左マージン
     const weapon = game.weaponSystem.getCurrentWeapon();
     ctx.font = '16px Arial';
     ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left'; // 左揃えを明示
     
     // 武器名の表示幅制限
     const maxWeaponTextWidth = Math.min(180, this.canvas.width / 2 - 40);
@@ -148,18 +145,18 @@ export class UIManager {
       
       if (shortTextWidth > maxWeaponTextWidth) {
         // それでも長い場合は武器名のみ表示
-        ctx.fillText(weapon.name, 20, 150);
+        ctx.fillText(weapon.name, leftMargin, 150);
       } else {
-        ctx.fillText(shortWeaponText, 20, 150);
+        ctx.fillText(shortWeaponText, leftMargin, 150);
       }
     } else {
-      ctx.fillText(weaponText, 20, 150);
+      ctx.fillText(weaponText, leftMargin, 150);
     }
     
     const weaponTimer = game.weaponSystem.getWeaponTimeRemaining();
     if (weaponTimer > 0) {
       ctx.fillStyle = '#00ffff';
-      ctx.fillText(`Time: ${weaponTimer.toFixed(1)}s`, 20, 170);
+      ctx.fillText(`Time: ${weaponTimer.toFixed(1)}s`, leftMargin, 170);
     }
     
     // Game time - 右側、余白を確保
@@ -517,19 +514,23 @@ export class UIManager {
     const count = 2;
     
     for (let i = 0; i < count; i++) {
+      const baseX = Math.random() * this.canvas.width;
       const petal = {
-        x: Math.random() * this.canvas.width,
+        x: baseX,
         y: -20,
-        vx: (Math.random() - 0.5) * 30,
-        vy: 20 + Math.random() * 30,
+        baseX: baseX, // 基準位置を保存
+        vx: (Math.random() - 0.5) * 5, // 横方向の初期速度をさらに抑制
+        vy: 30 + Math.random() * 20, // 落下速度を一定に
         color: colors[Math.floor(Math.random() * colors.length)],
-        width: 8 + Math.random() * 6,
-        height: 10 + Math.random() * 8,
+        width: 6 + Math.random() * 4,
+        height: 8 + Math.random() * 6,
         rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 5,
-        swayAmplitude: 20 + Math.random() * 30,
-        swayFrequency: 0.5 + Math.random() * 1,
-        initialX: Math.random() * this.canvas.width,
+        rotationSpeed: (Math.random() - 0.5) * 2, // 回転速度をさらに抑制
+        swayAmplitude: 5 + Math.random() * 10, // 揺れ幅をさらに抑制
+        swayFrequency: 0.2 + Math.random() * 0.4, // 揺れ周波数をゆるやかに
+        windForce: (Math.random() - 0.5) * 3, // 風の力をさらに抑制
+        gravity: 20 + Math.random() * 10, // 重力加速度
+        mass: 0.5 + Math.random() * 0.5, // 質量（風の影響度）
         timeAlive: 0,
         alpha: 1
       };
@@ -542,12 +543,40 @@ export class UIManager {
       const petal = this.petals[i];
       
       petal.timeAlive += dt;
-      petal.y += petal.vy * dt;
-      petal.rotation += petal.rotationSpeed * dt;
       
-      // 横揺れ動作
-      const swayOffset = Math.sin(petal.timeAlive * petal.swayFrequency * Math.PI * 2) * petal.swayAmplitude;
-      petal.x = petal.initialX + swayOffset;
+      // 重力の影響で徐々に加速
+      petal.vy += petal.gravity * dt;
+      
+      // 風の影響（左右にふらつく）- よりゆるやかに
+      const windEffect = Math.sin(petal.timeAlive * 1) * petal.windForce * dt / petal.mass;
+      petal.vx += windEffect;
+      
+      // 空気抵抗で横方向の速度を減衰 - より強く減衰
+      petal.vx *= 0.95;
+      
+      // 最大落下速度を制限
+      petal.vy = Math.min(petal.vy, 80);
+      
+      // 基準位置の更新（風の影響）
+      petal.baseX += petal.vx * dt;
+      petal.y += petal.vy * dt;
+      
+      // より自然な左右の揺れ（複数の周波数を組み合わせ）
+      const sway1 = Math.sin(petal.timeAlive * petal.swayFrequency * Math.PI * 2) * petal.swayAmplitude * 0.7;
+      const sway2 = Math.sin(petal.timeAlive * petal.swayFrequency * 1.7 * Math.PI * 2) * petal.swayAmplitude * 0.3;
+      
+      // 最終位置 = 基準位置 + 揺れ
+      petal.x = petal.baseX + sway1 + sway2;
+      
+      // 回転も風の影響を受ける - よりゆるやかに
+      const rotationWind = Math.sin(petal.timeAlive * 0.8) * 0.3;
+      petal.rotation += (petal.rotationSpeed + rotationWind) * dt;
+      
+      // 画面端での境界処理（跳ね返り）
+      if (petal.baseX < -petal.swayAmplitude || petal.baseX > this.canvas.width + petal.swayAmplitude) {
+        petal.vx *= -0.3; // 弱い跳ね返り
+        petal.baseX = Math.max(-petal.swayAmplitude, Math.min(this.canvas.width + petal.swayAmplitude, petal.baseX));
+      }
       
       // 画面下に到達したら削除
       if (petal.y > this.canvas.height + 20) {
