@@ -2,7 +2,7 @@ export class InputManager {
   constructor(canvas) {
     this.canvas = canvas;
     this.keys = new Set();
-    this.mouse = { x: 0, y: 0, pressed: false };
+    this.mouse = { x: 0, y: 0, pressed: false, justClicked: false };
     this.touch = { x: 0, y: 0, active: false, identifier: null };
     this.gamepad = null;
     this.canvasScale = 1;
@@ -74,6 +74,7 @@ export class InputManager {
   handleMouseDown(e) {
     if (e.button === 0) {
       this.mouse.pressed = true;
+      this.mouse.justClicked = true;
       e.preventDefault();
     }
   }
@@ -108,6 +109,7 @@ export class InputManager {
       this.mouse.x = this.touch.x;
       this.mouse.y = this.touch.y;
       this.mouse.pressed = true;
+      this.mouse.justClicked = true;
     }
   }
 
@@ -247,16 +249,20 @@ export class InputManager {
         }
       }
     }
+    
+    // justClickedフラグを次のフレームでリセット
+    this.mouse.justClicked = false;
   }
 
   reset() {
     this.keys.clear();
     this.mouse.pressed = false;
+    this.mouse.justClicked = false;
     this.touch.active = false;
   }
 
   checkLevelUpCardClick(game) {
-    if (!this.mouse.pressed || !game.levelingSystem) return -1;
+    if (!this.mouse.justClicked || !game.levelingSystem) return -1;
     
     const upgrades = game.levelingSystem.getAvailableUpgrades();
     if (upgrades.length === 0) return -1;

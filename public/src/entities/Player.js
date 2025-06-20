@@ -82,7 +82,7 @@ export class Player extends Entity {
   async shoot(direction) {
     const { Game } = await import('../core/Game.js');
     const game = Game.getInstance();
-    const bullets = game.weaponSystem.fire(this.x, this.y, direction);
+    const bullets = game.weaponSystem.fire(this.x, this.y, direction, game.permanentUpgrades);
     
     bullets.forEach(bullet => {
       game.addEntity(bullet);
@@ -192,10 +192,6 @@ export class Player extends Entity {
     this.hasPiercing = stats.piercing;
     this.hasExplosive = stats.explosive;
     this.hasLifesteal = stats.lifesteal;
-  }
-
-  heal(amount) {
-    this.health = Math.min(this.maxHealth, this.health + amount);
   }
 
   getCurrentDamage() {

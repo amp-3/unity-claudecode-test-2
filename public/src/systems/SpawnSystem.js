@@ -68,7 +68,7 @@ export class SpawnSystem {
       return;
     }
     
-    const spawnDelay = Math.max(0.3, 2 - this.wave * 0.1);
+    const spawnDelay = Math.max(0.15, 1 - this.wave * 0.05);
     
     if (this.timeSinceLastSpawn >= spawnDelay && this.enemiesSpawned < this.enemiesInWave) {
       this.spawnEnemy();

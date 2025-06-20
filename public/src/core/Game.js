@@ -154,7 +154,7 @@ export class Game {
         this.showMenu();
         break;
       case 'PLAYING':
-        if (prevState !== 'PAUSED') {
+        if (prevState !== 'PAUSED' && prevState !== 'LEVEL_UP') {
           this.startNewGame();
         }
         break;
@@ -212,6 +212,10 @@ export class Game {
 
   handleLevelUp() {
     this.isPaused = true;
+    // レベルアップ画面遷移時に継続中の入力をクリア
+    if (this.inputManager) {
+      this.inputManager.reset();
+    }
   }
 
   selectUpgrade(upgradeIndex) {
@@ -348,12 +352,20 @@ export class Game {
       if (!a.piercing) a.destroy();
       if (destroyed) {
         this.particleSystem.createExplosion(b.x, b.y);
+        // ライフスティール効果処理
+        if (this.player && this.permanentUpgrades) {
+          this.permanentUpgrades.processLifesteal(this.player, a.damage);
+        }
       }
     } else if (a.type === 'enemy' && b.type === 'bullet') {
       const destroyed = a.takeDamage(b.damage);
       if (!b.piercing) b.destroy();
       if (destroyed) {
         this.particleSystem.createExplosion(a.x, a.y);
+        // ライフスティール効果処理
+        if (this.player && this.permanentUpgrades) {
+          this.permanentUpgrades.processLifesteal(this.player, b.damage);
+        }
       }
     } else if (a.type === 'player' && b.type === 'powerup') {
       b.applyTo(a);
