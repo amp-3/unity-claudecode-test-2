@@ -177,15 +177,28 @@ export class UIManager {
     }
     
     // デバッグ用: マウス位置表示（問題が解決したら削除）
-    /*
-    if (game.inputManager) {
+    if (game.inputManager && player) {
       const mousePos = game.inputManager.getMousePosition();
+      const shootDir = Math.atan2(mousePos.y - player.y, mousePos.x - player.x);
+      const shootDegrees = (shootDir * 180 / Math.PI).toFixed(1);
+      
       ctx.font = '12px Arial';
       ctx.fillStyle = '#ff00ff';
       ctx.fillText(`Mouse: ${Math.round(mousePos.x)}, ${Math.round(mousePos.y)}`, this.canvas.width - rightMargin, 65);
       ctx.fillText(`Player: ${Math.round(player.x)}, ${Math.round(player.y)}`, this.canvas.width - rightMargin, 80);
+      ctx.fillText(`Angle: ${shootDegrees}°`, this.canvas.width - rightMargin, 95);
+      
+      // マウスとプレイヤー間に線を描画
+      ctx.save();
+      ctx.strokeStyle = '#ff00ff';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(player.x, player.y);
+      ctx.lineTo(mousePos.x, mousePos.y);
+      ctx.stroke();
+      ctx.restore();
     }
-    */
     
     ctx.restore();
   }
