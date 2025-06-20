@@ -97,25 +97,51 @@ export class UIManager {
     ctx.textBaseline = 'top';
     ctx.fillText(`Score: ${game.score}`, 20, 20);
     
-    // Wave info
+    // Wave info - 左側に配置、適切なサイズで
     ctx.font = '18px Arial';
-    ctx.fillText(`Wave: ${game.spawnSystem.getCurrentWave()}`, 20, 50);
+    ctx.fillStyle = '#ffffff';
+    const maxLeftWidth = Math.min(200, this.canvas.width / 2 - 40);
+    const waveText = `Wave: ${game.spawnSystem.getCurrentWave()}`;
+    ctx.fillText(waveText, 20, 50);
     
     if (game.spawnSystem.isInBetweenWaves()) {
       ctx.fillStyle = '#ffff00';
       ctx.fillText('Wave Complete!', 20, 75);
     } else {
-      ctx.fillText(`Enemies: ${game.spawnSystem.getEnemiesRemaining()}`, 20, 75);
+      ctx.fillStyle = '#ffffff';
+      const enemiesText = `Enemies: ${game.spawnSystem.getEnemiesRemaining()}`;
+      ctx.fillText(enemiesText, 20, 75);
     }
     
     // Health
     this.renderHealthBar(20, 110, player.health, player.maxHealth);
     
-    // Weapon info
+    // Weapon info - 左側、適切な幅で
     const weapon = game.weaponSystem.getCurrentWeapon();
     ctx.font = '16px Arial';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(`Weapon: ${weapon.name}`, 20, 150);
+    
+    // 武器名の表示幅制限
+    const maxWeaponTextWidth = Math.min(180, this.canvas.width / 2 - 40);
+    const weaponText = `Weapon: ${weapon.name}`;
+    
+    // テキスト幅を測定
+    const textWidth = ctx.measureText(weaponText).width;
+    
+    if (textWidth > maxWeaponTextWidth) {
+      // 長すぎる場合は武器名を短縮
+      const shortWeaponText = `Weap: ${weapon.name}`;
+      const shortTextWidth = ctx.measureText(shortWeaponText).width;
+      
+      if (shortTextWidth > maxWeaponTextWidth) {
+        // それでも長い場合は武器名のみ表示
+        ctx.fillText(weapon.name, 20, 150);
+      } else {
+        ctx.fillText(shortWeaponText, 20, 150);
+      }
+    } else {
+      ctx.fillText(weaponText, 20, 150);
+    }
     
     const weaponTimer = game.weaponSystem.getWeaponTimeRemaining();
     if (weaponTimer > 0) {
@@ -123,19 +149,21 @@ export class UIManager {
       ctx.fillText(`Time: ${weaponTimer.toFixed(1)}s`, 20, 170);
     }
     
-    // Game time
+    // Game time - 右側、余白を確保
     ctx.textAlign = 'right';
     ctx.fillStyle = '#ffffff';
     const minutes = Math.floor(game.gameTime / 60);
     const seconds = Math.floor(game.gameTime % 60);
-    ctx.fillText(`Time: ${minutes}:${seconds.toString().padStart(2, '0')}`, this.canvas.width - 20, 20);
+    const timeText = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const rightMargin = 20;
+    ctx.fillText(timeText, this.canvas.width - rightMargin, 20);
     
-    // FPS (optional)
+    // FPS - 右側、時間表示の下
     if (game.deltaTime > 0) {
       const fps = Math.round(1 / game.deltaTime);
       ctx.font = '14px Arial';
       ctx.fillStyle = '#888888';
-      ctx.fillText(`FPS: ${fps}`, this.canvas.width - 20, 45);
+      ctx.fillText(`FPS: ${fps}`, this.canvas.width - rightMargin, 45);
     }
     
     ctx.restore();

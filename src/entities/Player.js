@@ -1,4 +1,5 @@
 import { Entity } from '../core/Entity.js';
+import { AssetLoader } from '../utils/AssetLoader.js';
 
 export class Player extends Entity {
   constructor(x, y) {
@@ -14,12 +15,14 @@ export class Player extends Entity {
     this.invulnerableTime = 0;
     this.invulnerableDuration = 1.5;
     
-    this.width = 24;
-    this.height = 24;
-    this.collisionRadius = 12;
+    this.width = 32;
+    this.height = 32;
+    this.collisionRadius = 16;
     
     this.speedMultiplier = 1;
     this.fireRateMultiplier = 1;
+    
+    this.assetLoader = AssetLoader.getInstance();
   }
 
   update(dt, input) {
@@ -117,24 +120,40 @@ export class Player extends Entity {
   render(ctx) {
     ctx.save();
     ctx.translate(this.x, this.y);
-    ctx.rotate(this.rotation);
     
     if (this.invulnerableTime > 0 && Math.floor(this.invulnerableTime * 10) % 2 === 0) {
       ctx.globalAlpha = 0.5;
     }
     
-    ctx.fillStyle = '#00ff00';
-    ctx.beginPath();
-    ctx.moveTo(this.width / 2, 0);
-    ctx.lineTo(-this.width / 2, -this.height / 2);
-    ctx.lineTo(-this.width / 4, 0);
-    ctx.lineTo(-this.width / 2, this.height / 2);
-    ctx.closePath();
-    ctx.fill();
+    const rocketSprite = this.assetLoader.getImage('rocket');
     
-    ctx.strokeStyle = '#00dd00';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    if (rocketSprite && this.assetLoader.isLoaded('rocket')) {
+      ctx.rotate(this.rotation + Math.PI / 2);
+      const spriteWidth = this.width;
+      const spriteHeight = this.height;
+      
+      ctx.drawImage(
+        rocketSprite,
+        -spriteWidth / 2,
+        -spriteHeight / 2,
+        spriteWidth,
+        spriteHeight
+      );
+    } else {
+      ctx.rotate(this.rotation);
+      ctx.fillStyle = '#00ff00';
+      ctx.beginPath();
+      ctx.moveTo(this.width / 2, 0);
+      ctx.lineTo(-this.width / 2, -this.height / 2);
+      ctx.lineTo(-this.width / 4, 0);
+      ctx.lineTo(-this.width / 2, this.height / 2);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.strokeStyle = '#00dd00';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
     
     ctx.restore();
   }

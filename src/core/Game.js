@@ -103,9 +103,18 @@ export class Game {
 
   async loadAssets() {
     try {
-      await this.audioManager.loadAudio();
+      const { AssetLoader } = await import('../utils/AssetLoader.js');
+      this.assetLoader = AssetLoader.getInstance();
+      
+      await Promise.all([
+        this.audioManager.loadAudio(),
+        this.assetLoader.loadAllSprites()
+      ]);
+      
       const savedData = this.saveSystem.load();
       this.highScore = savedData.highScore;
+      
+      console.log('🎮 All game assets loaded successfully');
     } catch (error) {
       console.warn('Failed to load some assets:', error);
     }
