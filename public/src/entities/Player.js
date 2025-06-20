@@ -144,15 +144,15 @@ export class Player extends Entity {
       ctx.globalAlpha = 0.5;
     }
     
-    const rocketSprite = this.assetLoader.getImage('rocket');
+    const playerSprite = this.assetLoader.getImage('player');
     
-    if (rocketSprite && this.assetLoader.isLoaded('rocket')) {
+    if (playerSprite && this.assetLoader.isLoaded('player')) {
       ctx.rotate(this.rotation + Math.PI / 2);
       const spriteWidth = this.width;
       const spriteHeight = this.height;
       
       ctx.drawImage(
-        rocketSprite,
+        playerSprite,
         -spriteWidth / 2,
         -spriteHeight / 2,
         spriteWidth,
