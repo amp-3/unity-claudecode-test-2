@@ -81,38 +81,78 @@ export class WeaponSystem {
     }
   }
 
-  fire(x, y, direction) {
+  fire(x, y, direction, permanentUpgrades = null) {
     const weapon = this.weapons[this.currentWeapon];
     const bullets = [];
     
-    if (weapon.bulletCount === 1) {
-      const bullet = new weapon.bulletClass(
-        x,
-        y,
-        direction + (Math.random() - 0.5) * weapon.spread,
-        weapon.speed,
-        weapon.damage
-      );
-      bullets.push(bullet);
-    } else {
-      const spreadAngle = weapon.spread;
-      const angleStep = spreadAngle / (weapon.bulletCount - 1);
-      const startAngle = direction - spreadAngle / 2;
-      
-      for (let i = 0; i < weapon.bulletCount; i++) {
-        const bulletAngle = startAngle + angleStep * i;
+    // 永続アップグレードからマルチショット角度を取得
+    let shootAngles = [direction];
+    if (permanentUpgrades) {
+      shootAngles = permanentUpgrades.getMultiShotAngles(direction);
+    }
+    
+    shootAngles.forEach(angle => {
+      if (weapon.bulletCount === 1) {
         const bullet = new weapon.bulletClass(
           x,
           y,
-          bulletAngle,
+          angle + (Math.random() - 0.5) * weapon.spread,
           weapon.speed,
           weapon.damage
         );
+        
+        // 永続アップグレード効果を適用
+        if (permanentUpgrades) {
+          this.applyPermanentUpgradesToBullet(bullet, permanentUpgrades);
+        }
+        
         bullets.push(bullet);
+      } else {
+        const spreadAngle = weapon.spread;
+        const angleStep = spreadAngle / (weapon.bulletCount - 1);
+        const startAngle = angle - spreadAngle / 2;
+        
+        for (let i = 0; i < weapon.bulletCount; i++) {
+          const bulletAngle = startAngle + angleStep * i;
+          const bullet = new weapon.bulletClass(
+            x,
+            y,
+            bulletAngle,
+            weapon.speed,
+            weapon.damage
+          );
+          
+          // 永続アップグレード効果を適用
+          if (permanentUpgrades) {
+            this.applyPermanentUpgradesToBullet(bullet, permanentUpgrades);
+          }
+          
+          bullets.push(bullet);
+        }
       }
-    }
+    });
     
     return bullets;
+  }
+  
+  applyPermanentUpgradesToBullet(bullet, permanentUpgrades) {
+    const bulletStats = permanentUpgrades.getBulletStats(bullet);
+    
+    // ダメージ適用
+    bullet.damage = bulletStats.damage;
+    
+    // 貫通効果適用
+    if (bulletStats.piercing) {
+      bullet.piercing = true;
+      bullet.piercingCount = bulletStats.piercingCount || 1;
+    }
+    
+    // 爆発効果適用
+    if (bulletStats.explosive) {
+      bullet.explosive = true;
+      bullet.explosionRadius = bulletStats.explosionRadius;
+      bullet.explosionDamage = bulletStats.explosionDamage;
+    }
   }
 
   getFireRate() {
