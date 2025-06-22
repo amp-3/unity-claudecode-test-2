@@ -28,6 +28,8 @@ export class Game {
     this.audioManager = null;
     this.particleSystem = null;
     this.saveSystem = null;
+    this.levelingSystem = null;
+    this.permanentUpgrades = null;
     
     Game.instance = this;
   }
@@ -66,13 +68,30 @@ export class Game {
   }
 
   handleResize() {
-    const container = this.canvas.parentElement;
-    const scaleX = container.clientWidth / this.canvas.width;
-    const scaleY = container.clientHeight / this.canvas.height;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    const borderWidth = window.innerWidth <= 768 ? 2 : 4;
+    const availableWidth = viewportWidth - borderWidth;
+    const availableHeight = viewportHeight - borderWidth;
+    
+    const scaleX = availableWidth / this.canvas.width;
+    const scaleY = availableHeight / this.canvas.height;
     const scale = Math.min(scaleX, scaleY);
     
-    this.canvas.style.transform = `scale(${scale})`;
+    this.canvas.style.transform = `translate(-50%, -50%) scale(${scale})`;
     this.canvas.style.transformOrigin = 'center';
+    this.canvas.style.position = 'absolute';
+    this.canvas.style.top = '50%';
+    this.canvas.style.left = '50%';
+    
+    if (this.inputManager) {
+      this.inputManager.updateCanvasScale(scale);
+      this.inputManager.updateCanvasPosition(
+        viewportWidth / 2 - (this.canvas.width * scale) / 2,
+        viewportHeight / 2 - (this.canvas.height * scale) / 2
+      );
+    }
   }
 
   async loadSystems() {
@@ -83,6 +102,8 @@ export class Game {
     const { AudioManager } = await import('../systems/AudioManager.js');
     const { ParticleSystem } = await import('../effects/ParticleSystem.js');
     const { SaveSystem } = await import('../systems/SaveSystem.js');
+    const { LevelingSystem } = await import('../systems/LevelingSystem.js');
+    const { PermanentUpgrades } = await import('../systems/PermanentUpgrades.js');
     
     this.inputManager = new InputManager(this.canvas);
     this.weaponSystem = new WeaponSystem();
@@ -91,6 +112,8 @@ export class Game {
     this.audioManager = new AudioManager();
     this.particleSystem = new ParticleSystem();
     this.saveSystem = new SaveSystem();
+    this.levelingSystem = new LevelingSystem();
+    this.permanentUpgrades = new PermanentUpgrades();
     
     this.systems.set('input', this.inputManager);
     this.systems.set('weapon', this.weaponSystem);
@@ -99,6 +122,8 @@ export class Game {
     this.systems.set('audio', this.audioManager);
     this.systems.set('particle', this.particleSystem);
     this.systems.set('save', this.saveSystem);
+    this.systems.set('leveling', this.levelingSystem);
+    this.systems.set('upgrades', this.permanentUpgrades);
   }
 
   async loadAssets() {
@@ -129,8 +154,12 @@ export class Game {
         this.showMenu();
         break;
       case 'PLAYING':
-        if (prevState !== 'PAUSED') {
+        if (prevState !== 'PAUSED' && prevState !== 'LEVEL_UP') {
           this.startNewGame();
+        }
+        // レベルアップ画面から戻った時は花びらをクリア
+        if (prevState === 'LEVEL_UP' && this.uiManager) {
+          this.uiManager.clearPetals();
         }
         break;
       case 'PAUSED':
@@ -139,6 +168,9 @@ export class Game {
       case 'GAME_OVER':
         this.gameOver();
         break;
+      case 'LEVEL_UP':
+        this.handleLevelUp();
+        break;
     }
   }
 
@@ -146,6 +178,12 @@ export class Game {
     this.entities.clear();
     this.score = 0;
     this.gameTime = 0;
+    if (this.levelingSystem) {
+      this.levelingSystem.reset();
+    }
+    if (this.permanentUpgrades) {
+      this.permanentUpgrades.reset();
+    }
   }
 
   async startNewGame() {
@@ -159,6 +197,8 @@ export class Game {
     
     this.spawnSystem.reset();
     this.weaponSystem.reset();
+    this.levelingSystem.reset();
+    this.permanentUpgrades.reset();
     
     if (this.audioManager.currentMusic) {
       this.audioManager.playMusic('bgm');
@@ -172,6 +212,44 @@ export class Game {
   unpause() {
     this.isPaused = false;
     this.setState('PLAYING');
+  }
+
+  handleLevelUp() {
+    this.isPaused = true;
+    // レベルアップ画面遷移時に継続中の入力をクリア
+    if (this.inputManager) {
+      this.inputManager.reset();
+    }
+    
+    // レベルアップ時のクラッカー演出
+    if (this.particleSystem) {
+      this.particleSystem.createLevelUpCelebration(this.canvas.width, this.canvas.height);
+    }
+  }
+
+  selectUpgrade(upgradeIndex) {
+    const selectedUpgrade = this.levelingSystem.selectUpgrade(upgradeIndex);
+    
+    if (selectedUpgrade) {
+      this.permanentUpgrades.applyUpgrade(selectedUpgrade);
+      this.audioManager.playSound('powerup');
+      
+      // プレイヤーのステータスを更新
+      if (this.player) {
+        this.player.applyPermanentUpgrades(this.permanentUpgrades);
+      }
+      
+      // パーティクルとUIの花びらをフェードアウト
+      if (this.particleSystem) {
+        this.particleSystem.fadeOutAll(0.2);
+      }
+      if (this.uiManager) {
+        this.uiManager.fadeOutPetals(0.2);
+      }
+      
+      this.isPaused = false;
+      this.setState('PLAYING');
+    }
   }
 
   gameOver() {
@@ -207,8 +285,8 @@ export class Game {
       this.updateGameplay(this.deltaTime);
     }
     
-    this.inputManager.update();
     this.handleInput();
+    this.inputManager.update();
     
     this.render();
     
@@ -237,6 +315,15 @@ export class Game {
           this.score += entity.scoreValue || 10;
           this.audioManager.playSound('explosion');
           this.particleSystem.createExplosion(entity.x, entity.y);
+          
+          // 経験値獲得
+          const expGained = entity.expValue || 10;
+          const leveledUp = this.levelingSystem.addExperience(expGained);
+          
+          if (leveledUp) {
+            this.setState('LEVEL_UP');
+            return; // レベルアップ時はゲームを一時停止
+          }
           
           const powerUp = this.spawnSystem.trySpawnPowerUp(entity.x, entity.y);
           if (powerUp) {
@@ -282,12 +369,20 @@ export class Game {
       if (!a.piercing) a.destroy();
       if (destroyed) {
         this.particleSystem.createExplosion(b.x, b.y);
+        // ライフスティール効果処理
+        if (this.player && this.permanentUpgrades) {
+          this.permanentUpgrades.processLifesteal(this.player, a.damage);
+        }
       }
     } else if (a.type === 'enemy' && b.type === 'bullet') {
       const destroyed = a.takeDamage(b.damage);
       if (!b.piercing) b.destroy();
       if (destroyed) {
         this.particleSystem.createExplosion(a.x, a.y);
+        // ライフスティール効果処理
+        if (this.player && this.permanentUpgrades) {
+          this.permanentUpgrades.processLifesteal(this.player, b.damage);
+        }
       }
     } else if (a.type === 'player' && b.type === 'powerup') {
       b.applyTo(a);
@@ -320,6 +415,23 @@ export class Game {
         this.setState('MENU');
       }
     }
+    
+    if (this.gameState === 'LEVEL_UP') {
+      // キーボードでの選択（1, 2, 3キー）
+      if (this.inputManager.keys.has('Digit1')) {
+        this.selectUpgrade(0);
+      } else if (this.inputManager.keys.has('Digit2')) {
+        this.selectUpgrade(1);
+      } else if (this.inputManager.keys.has('Digit3')) {
+        this.selectUpgrade(2);
+      }
+      
+      // マウスクリックでの選択
+      const clickedCard = this.inputManager.checkLevelUpCardClick(this);
+      if (clickedCard >= 0) {
+        this.selectUpgrade(clickedCard);
+      }
+    }
   }
 
   render() {
@@ -328,7 +440,7 @@ export class Game {
     this.ctx.fillStyle = '#111';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
-    if (this.gameState === 'PLAYING' || this.gameState === 'PAUSED') {
+    if (this.gameState === 'PLAYING' || this.gameState === 'PAUSED' || this.gameState === 'LEVEL_UP') {
       this.renderGameplay();
     }
     

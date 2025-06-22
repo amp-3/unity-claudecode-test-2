@@ -9,12 +9,10 @@ Omni Shooterは、HTML5 CanvasとJavaScriptで構築されたブラウザ向け�
 ## プロジェクト構造
 
 ```
-├── public/          # 公開用ビルド（サイト配布版）
-│   ├── index.html   # メインゲームページ（フルスクリーン対応）
-│   ├── test.html    # テスト・デバッグページ
-│   ├── src/         # ゲームソースコード
-│   └── assets/      # ゲームアセット（スプライト）
-├── src/             # 開発用ソースコード
+├── index.html       # メインゲームページ（フルスクリーン対応）
+├── test.html        # テスト・デバッグページ
+├── src/             # ゲームソースコード
+├── assets/          # ゲームアセット（スプライト）
 ├── test-game.html   # 開発用デバッグページ
 └── package.json     # Viteビルド設定
 ```
@@ -47,8 +45,8 @@ npm run lint:fix
 
 ### デバッグとテスト
 - `test-game.html` - 開発用デバッグページ（全機能テスト可能）
-- `public/test.html` - 公開版テストページ（レスポンシブ対応）
-- `public/index.html` - 公開版メインゲーム（完全フルスクリーン）
+- `test.html` - テストページ（レスポンシブ対応）
+- `index.html` - メインゲーム（完全フルスクリーン）
 - `npm run dev`でlocalhost:3000でアクセス可能
 
 ## アーキテクチャとコード構造
