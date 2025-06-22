@@ -81,6 +81,11 @@ export class UIManager {
       ctx.fillText(`High Score: ${game.highScore}`, centerX, centerY + 180);
     }
     
+    // Made with Claude Code
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#666666';
+    ctx.fillText('Made with Claude Code', centerX, this.canvas.height - 20);
+    
     ctx.restore();
   }
 

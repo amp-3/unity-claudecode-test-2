@@ -1,5 +1,9 @@
 # Omni Shooter - 公開版
 
+🎮 **プレイする**: https://amp-3.github.io/unity-claudecode-test-2/
+
+> 🤖 このゲームは[Claude Code](https://claude.ai/code)を使用して実装されました。
+
 ## ゲームの遊び方
 
 ### 基本操作
@@ -45,3 +49,54 @@
 - ゲームパッド: 対応
 
 このゲームはブラウザで直接動作し、インストール不要です。
+
+## 開発者向け情報
+
+### ビルド方法
+
+#### 必要な環境
+- Node.js (v14以降)
+- npm
+
+#### セットアップ
+```bash
+# 依存関係のインストール
+npm install
+```
+
+#### 開発サーバーの起動
+```bash
+# 開発サーバーを起動（ホットリロード対応）
+npm run dev
+# http://localhost:3000 でアクセス可能
+```
+
+#### 本番用ビルド
+```bash
+# publicフォルダに本番用ファイルを生成
+npm run build
+```
+
+#### ビルドの確認
+```bash
+# ビルドしたファイルをプレビューサーバーで確認
+npm run preview
+```
+
+### その他のコマンド
+```bash
+# テスト実行
+npm test
+
+# テスト監視モード
+npm run test:watch
+
+# リント実行
+npm run lint
+
+# リント自動修正
+npm run lint:fix
+```
+
+### デプロイ
+ビルドしたpublicフォルダの内容をGitHub Pagesや任意のWebサーバーにアップロードすることでデプロイできます。
