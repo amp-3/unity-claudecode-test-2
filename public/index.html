@@ -2,65 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Omni Shooter</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        
-        html, body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000;
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            touch-action: manipulation;
-        }
-        
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        #game-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        canvas {
-            display: block;
-            border: 2px solid #333;
-            position: absolute;
-            image-rendering: pixelated;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: crisp-edges;
-        }
-        
-        @media (max-width: 768px) {
-            canvas {
-                border: 1px solid #333;
-            }
-        }
-    </style>
-  <script type="module" crossorigin src="/assets/main-c3aa80d2.js"></script>
+    <meta http-equiv="refresh" content="0; url=../index.html">
+    <title>Redirecting...</title>
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="game-canvas"></canvas>
-    </div>
-    
+    <p>Redirecting to main game...</p>
+    <script>
+        window.location.replace("../index.html");
+    </script>
 </body>
 </html>
