@@ -1,88 +1,47 @@
-# Omni Shooter
+# Omni Shooter - 公開版
 
-A browser-based omni-directional shooter game built with JavaScript and HTML5 Canvas.
+## ゲームの遊び方
 
-## Project Structure
+### 基本操作
+- **移動**: WASD キーまたは矢印キー
+- **射撃**: マウスクリック（マウスカーソルの方向に発射）
+- **ポーズ**: Escキー
 
-```
-omni-shooter/
-├── src/
-│   ├── core/          # Core game engine components
-│   ├── entities/      # Game entities (player, enemies, projectiles)
-│   ├── systems/       # Game systems (physics, collision, input)
-│   ├── ui/            # User interface components
-│   ├── effects/       # Visual and sound effects
-│   ├── utils/         # Utility functions and helpers
-│   ├── debug/         # Debug tools and helpers
-│   ├── main.js        # Entry point
-│   └── game.js        # Main game class
-├── assets/
-│   ├── sprites/       # Game sprites and images
-│   ├── audio/         # Sound effects and music
-│   └── fonts/         # Game fonts
-├── tests/             # Unit and integration tests
-├── dist/              # Build output
-├── index.html         # Main HTML file
-├── package.json       # Project configuration
-└── README.md          # This file
-```
+### ゲームの目標
+- 敵を倒してスコアを獲得
+- パワーアップアイテムを取得して武器を強化
+- できるだけ長く生き残る
 
-## Getting Started
+### 武器の種類
+- **Normal**: 基本武器
+- **Spread**: 拡散弾
+- **Power**: 高威力弾
+- **Rapid**: 連射弾
+- **Laser**: レーザー弾
 
-### Prerequisites
+### パワーアップ
+- **Health**: 体力回復
+- **Speed**: 移動速度向上
+- **Fire Rate**: 射撃速度向上
+- **武器アップグレード**: 一定時間特殊武器に変更
 
-- Node.js (v14 or higher)
-- npm or yarn
+## ファイル構成
 
-### Installation
+- `index.html` - メインゲーム
+- `test.html` - テスト・デバッグページ
+- `src/` - ゲームソースコード
+- `assets/` - ゲームアセット（スプライト等）
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+## 動作環境
 
-### Development
+- モダンなWebブラウザ（Chrome, Firefox, Safari, Edge）
+- JavaScript ES6モジュール対応
+- HTML5 Canvas対応
 
-Run the development server:
-```bash
-npm run dev
-```
+## サポート
 
-### Building
+- PC: キーボード・マウス操作
+- モバイル: タッチ操作対応
+- ゲームパッド: 対応
 
-Build for production:
-```bash
-npm run build
-```
-
-### Testing
-
-Run tests:
-```bash
-npm test
-```
-
-Run tests in watch mode:
-```bash
-npm run test:watch
-```
-
-## Game Controls
-
-- **Movement**: WASD or Arrow Keys
-- **Shoot**: Mouse Click or Space
-- **Pause**: Escape or P
-
-## Features
-
-- Omni-directional shooting mechanics
-- Enemy wave system
-- Power-ups and upgrades
-- Score tracking
-- Particle effects
-- Sound effects and music
-
-## License
-
-MIT
+このゲームはブラウザで直接動作し、インストール不要です。

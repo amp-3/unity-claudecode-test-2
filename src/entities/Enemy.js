@@ -9,6 +9,7 @@ export class Enemy extends Entity {
     this.speed = 100;
     this.damage = 1;
     this.scoreValue = 10;
+    this.expValue = 10; // 経験値獲得量
     this.behaviorType = 'chase';
     this.shootCooldown = 0;
     this.shootInterval = 2;
@@ -150,6 +151,7 @@ export class FastEnemy extends Enemy {
     this.speed = 180;
     this.health = 1;
     this.scoreValue = 15;
+    this.expValue = 12;
     this.width = 16;
     this.height = 16;
     this.collisionRadius = 8;
@@ -185,6 +187,7 @@ export class TankEnemy extends Enemy {
     this.maxHealth = 5;
     this.damage = 2;
     this.scoreValue = 30;
+    this.expValue = 25;
     this.width = 30;
     this.height = 30;
     this.collisionRadius = 15;
@@ -220,6 +223,7 @@ export class SniperEnemy extends Enemy {
     this.health = 2;
     this.maxHealth = 2;
     this.scoreValue = 25;
+    this.expValue = 20;
     this.shootInterval = 1.5;
     this.width = 24;
     this.height = 18;
@@ -255,6 +259,7 @@ export class OrbitEnemy extends Enemy {
     this.health = 2;
     this.maxHealth = 2;
     this.scoreValue = 20;
+    this.expValue = 18;
     this.width = 20;
     this.height = 20;
     this.collisionRadius = 10;

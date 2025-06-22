@@ -53,7 +53,7 @@ export class AssetLoader {
 
   async loadAllSprites() {
     const sprites = {
-      'rocket': 'assets/sprites/rocket_01.png'
+      'player': 'assets/sprites/player.png'
     };
 
     const loadPromises = Object.entries(sprites).map(([name, path]) => 
