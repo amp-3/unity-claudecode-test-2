@@ -2,13 +2,29 @@ export class InputManager {
   constructor(canvas) {
     this.canvas = canvas;
     this.keys = new Set();
-    this.mouse = { x: 0, y: 0, pressed: false };
+    this.mouse = { x: 0, y: 0, pressed: false, justClicked: false };
     this.touch = { x: 0, y: 0, active: false, identifier: null };
     this.gamepad = null;
+    this.canvasScale = 1;
+    this.canvasOffsetX = 0;
+    this.canvasOffsetY = 0;
     
     this.preventedKeys = new Set(['F1', 'F5', 'F11', 'F12']);
     
     this.bindEvents();
+  }
+
+  updateCanvasScale(scale) {
+    // getBoundingClientRect()を使用しているため、このメソッドは不要になったが
+    // 互換性のために残しておく
+    this.canvasScale = scale;
+  }
+
+  updateCanvasPosition(offsetX, offsetY) {
+    // getBoundingClientRect()を使用しているため、このメソッドは不要になったが
+    // 互換性のために残しておく
+    this.canvasOffsetX = offsetX;
+    this.canvasOffsetY = offsetY;
   }
 
   bindEvents() {
@@ -43,14 +59,22 @@ export class InputManager {
   }
 
   handleMouseMove(e) {
+    // キャンバスの境界ボックスを取得して正確な座標変換を行う
     const rect = this.canvas.getBoundingClientRect();
-    this.mouse.x = e.clientX - rect.left;
-    this.mouse.y = e.clientY - rect.top;
+    
+    // キャンバス内の相対座標を計算
+    const relativeX = e.clientX - rect.left;
+    const relativeY = e.clientY - rect.top;
+    
+    // キャンバス座標系に変換
+    this.mouse.x = (relativeX / rect.width) * this.canvas.width;
+    this.mouse.y = (relativeY / rect.height) * this.canvas.height;
   }
 
   handleMouseDown(e) {
     if (e.button === 0) {
       this.mouse.pressed = true;
+      this.mouse.justClicked = true;
       e.preventDefault();
     }
   }
@@ -66,14 +90,19 @@ export class InputManager {
     if (e.touches.length > 0) {
       const touch = e.touches[0];
       const rect = this.canvas.getBoundingClientRect();
-      this.touch.x = touch.clientX - rect.left;
-      this.touch.y = touch.clientY - rect.top;
+      
+      const relativeX = touch.clientX - rect.left;
+      const relativeY = touch.clientY - rect.top;
+      
+      this.touch.x = (relativeX / rect.width) * this.canvas.width;
+      this.touch.y = (relativeY / rect.height) * this.canvas.height;
       this.touch.active = true;
       this.touch.identifier = touch.identifier;
       
       this.mouse.x = this.touch.x;
       this.mouse.y = this.touch.y;
       this.mouse.pressed = true;
+      this.mouse.justClicked = true;
     }
   }
 
@@ -83,8 +112,12 @@ export class InputManager {
       const touch = e.touches[i];
       if (touch.identifier === this.touch.identifier) {
         const rect = this.canvas.getBoundingClientRect();
-        this.touch.x = touch.clientX - rect.left;
-        this.touch.y = touch.clientY - rect.top;
+        
+        const relativeX = touch.clientX - rect.left;
+        const relativeY = touch.clientY - rect.top;
+        
+        this.touch.x = (relativeX / rect.width) * this.canvas.width;
+        this.touch.y = (relativeY / rect.height) * this.canvas.height;
         
         this.mouse.x = this.touch.x;
         this.mouse.y = this.touch.y;
@@ -202,11 +235,42 @@ export class InputManager {
         }
       }
     }
+    
+    // justClickedフラグを次のフレームでリセット
+    this.mouse.justClicked = false;
   }
 
   reset() {
     this.keys.clear();
     this.mouse.pressed = false;
+    this.mouse.justClicked = false;
     this.touch.active = false;
+  }
+
+  checkLevelUpCardClick(game) {
+    if (!this.mouse.justClicked || !game.levelingSystem) return -1;
+    
+    const upgrades = game.levelingSystem.getAvailableUpgrades();
+    if (upgrades.length === 0) return -1;
+    
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height / 2;
+    const cardWidth = 180;
+    const cardHeight = 140;
+    const cardSpacing = 20;
+    const totalWidth = (cardWidth * 3) + (cardSpacing * 2);
+    const startX = centerX - totalWidth / 2;
+    const cardY = centerY - 40;
+    
+    for (let i = 0; i < upgrades.length; i++) {
+      const cardX = startX + (cardWidth + cardSpacing) * i;
+      
+      if (this.mouse.x >= cardX && this.mouse.x <= cardX + cardWidth &&
+          this.mouse.y >= cardY && this.mouse.y <= cardY + cardHeight) {
+        return i;
+      }
+    }
+    
+    return -1;
   }
 }
